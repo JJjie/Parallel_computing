@@ -87,8 +87,8 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size)
         goto Error;
     }
     // 运行核函数
-<span style="BACKGROUND-COLOR: #ff6666"><strong>    addKernel<<<1, size>>>(dev_c, dev_a, dev_b);</strong>
-</span>    // cudaThreadSynchronize waits for the kernel to finish, and returns
+    addKernel<<<1, size>>>(dev_c, dev_a, dev_b);
+    // cudaThreadSynchronize waits for the kernel to finish, and returns
     // any errors encountered during the launch.
     cudaStatus = cudaThreadSynchronize();   //同步线程
     if (cudaStatus != cudaSuccess)
@@ -108,4 +108,4 @@ Error:
     cudaFree(dev_a);
     cudaFree(dev_b);
     return cudaStatus;
-}  
+}
