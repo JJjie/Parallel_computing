@@ -1,0 +1,18 @@
+.PHONY: all
+
+all: threadParallel
+
+build/Makefile: CMakeLists.txt
+	mkdir build && cd build && cmake ../ && cd ../
+
+build/threadParallel: build/Makefile
+	cd build && make && cd ../
+
+install:
+	cp build/threadParallel ./
+
+run:
+	./threadParallel
+
+clean:
+	rm -rf build
