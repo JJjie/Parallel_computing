@@ -12,12 +12,12 @@ int main(){
   {
       cudaGetDeviceProperties(&prop,i);
   }
-  cudaStatus = addWithCuda(c, a, b, arraySize);
+  // cudaStatus = addWithCuda(c, a, b, arraySize);
 
-  print("%s\n", prop.name);
-  print("%d\n", prop.regsPerBlock);
-  print("%d\n", prop.wrapSize);
-  print("%d\n", prop.clockRate)
+  printf("%s\n", prop.name);
+  printf("%d\n", prop.regsPerBlock);
+  printf("%d\n", prop.wrapSize);
+  printf("%d\n", prop.clockRate)
 
   return 0;
 }
