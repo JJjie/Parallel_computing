@@ -16,8 +16,8 @@ int main(){
 
   printf("%s\n", prop.name);
   printf("%d\n", prop.regsPerBlock);
-  printf("%d\n", prop.wrapSize);
-  printf("%d\n", prop.clockRate)
+  printf("%d\n", prop.warpSize);
+  printf("%d\n", prop.clockRate);
 
   return 0;
 }
