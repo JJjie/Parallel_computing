@@ -1,34 +1,55 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+
 #include <stdio.h>
-cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size);
-__global__ void addKernel(int *c, const int *a, const int *b)
+
+cudaError_t addWithCuda(int *c, const int *a, size_t size);
+
+__global__ void addKernel(int *c, const int *a)
 {
-    int i = blockIdx.x;
-    c[i] = a[i] + b[i];
+    int i = threadIdx.x;
+    extern __shared__ int smem[];
+    smem[i] = a[i];
+    __syncthreads();
+    if(i == 0)  // 0号线程做平方和
+    {
+        c[0] = 0;
+        for(int d = 0; d < 5; d++)
+        {
+            c[0] += smem[d] * smem[d];
+        }
+    }
+    if(i == 1)//1号线程做累加
+    {
+        c[1] = 0;
+        for(int d = 0; d < 5; d++)
+        {
+            c[1] += smem[d];
+        }
+    }
+    if(i == 2)  //2号线程做累乘
+    {
+        c[2] = 1;
+        for(int d = 0; d < 5; d++)
+        {
+            c[2] *= smem[d];
+        }
+    }
 }
+
 int main()
 {
     const int arraySize = 5;
     const int a[arraySize] = { 1, 2, 3, 4, 5 };
-    const int b[arraySize] = { 10, 20, 30, 40, 50 };
     int c[arraySize] = { 0 };
     // Add vectors in parallel.
-    cudaError_t cudaStatus;
-    int num = 0;
-    cudaDeviceProp prop;
-    cudaStatus = cudaGetDeviceCount(&num);
-    for(int i = 0;i<num;i++)
-    {
-        cudaGetDeviceProperties(&prop,i);
-    }
-    cudaStatus = addWithCuda(c, a, b, arraySize);
+    cudaError_t cudaStatus = addWithCuda(c, a, arraySize);
     if (cudaStatus != cudaSuccess)
     {
         fprintf(stderr, "addWithCuda failed!");
         return 1;
     }
-    printf("{1,2,3,4,5} + {10,20,30,40,50} = {%d,%d,%d,%d,%d}\n",c[0],c[1],c[2],c[3],c[4]);
+    printf("\t1+2+3+4+5 = %d\n\t1^2+2^2+3^2+4^2+5^2 = %d\n\t1*2*3*4*5 = %d\n\n\n\n\n\n", c[1], c[0], c[2]);
     // cudaThreadExit must be called before exiting in order for profiling and
     // tracing tools such as Nsight and Visual Profiler to show complete traces.
     cudaStatus = cudaThreadExit();
@@ -39,11 +60,11 @@ int main()
     }
     return 0;
 }
+
 // Helper function for using CUDA to add vectors in parallel.
-cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size)
+cudaError_t addWithCuda(int *c, const int *a,  size_t size)
 {
     int *dev_a = 0;
-    int *dev_b = 0;
     int *dev_c = 0;
     cudaError_t cudaStatus;
 
@@ -54,6 +75,7 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size)
         fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
         goto Error;
     }
+
     // Allocate GPU buffers for three vectors (two input, one output)    .
     cudaStatus = cudaMalloc((void**)&dev_c, size * sizeof(int));
     if (cudaStatus != cudaSuccess)
@@ -61,13 +83,8 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size)
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
+
     cudaStatus = cudaMalloc((void**)&dev_a, size * sizeof(int));
-    if (cudaStatus != cudaSuccess)
-    {
-        fprintf(stderr, "cudaMalloc failed!");
-        goto Error;
-    }
-    cudaStatus = cudaMalloc((void**)&dev_b, size * sizeof(int));
     if (cudaStatus != cudaSuccess)
     {
         fprintf(stderr, "cudaMalloc failed!");
@@ -80,24 +97,8 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size)
         fprintf(stderr, "cudaMemcpy failed!");
         goto Error;
     }
-    cudaStatus = cudaMemcpy(dev_b, b, size * sizeof(int), cudaMemcpyHostToDevice);
-    if (cudaStatus != cudaSuccess)
-    {
-        fprintf(stderr, "cudaMemcpy failed!");
-        goto Error;
-    }
-    // 加入流处理
-    cudaStream_t stream[5];
-    for(int i = 0;i<5;i++)
-    {
-        cudaStreamCreate(&stream[i]);   //创建流
-    }
     // Launch a kernel on the GPU with one thread for each element.
-    for(int i = 0;i<5;i++)
-    {
-        addKernel<<<1,1,0,stream[i]>>>(dev_c+i, dev_a+i, dev_b+i);    //执行流
-    }
-    cudaDeviceSynchronize();
+    addKernel<<<1, size, size * sizeof(int), 0>>>(dev_c, dev_a);
     // cudaThreadSynchronize waits for the kernel to finish, and returns
     // any errors encountered during the launch.
     cudaStatus = cudaThreadSynchronize();
@@ -106,6 +107,7 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size)
         fprintf(stderr, "cudaThreadSynchronize returned error code %d after launching addKernel!\n", cudaStatus);
         goto Error;
     }
+
     // Copy output vector from GPU buffer to host memory.
     cudaStatus = cudaMemcpy(c, dev_c, size * sizeof(int), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess)
@@ -113,13 +115,9 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size)
         fprintf(stderr, "cudaMemcpy failed!");
         goto Error;
     }
+
 Error:
-    for(int i = 0;i<5;i++)
-    {
-        cudaStreamDestroy(stream[i]);   //销毁流
-    }
     cudaFree(dev_c);
     cudaFree(dev_a);
-    cudaFree(dev_b);
     return cudaStatus;
 }

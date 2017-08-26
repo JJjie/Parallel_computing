@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-PROJECT(flowParallel)
+PROJECT(threadsignal)
 
 FIND_PACKAGE(CUDA)
 
@@ -10,4 +10,4 @@ file(GLOB CURRENT_SOURCES *.c *.cpp *.cu)
 source_group("Include" FILES ${CURRENT_HEADERS})
 source_group("Source" FILES ${CURRENT_SOURCES})
 
-CUDA_ADD_EXECUTABLE(flowParallel ${CURRENT_HEADERS} ${CURRENT_SOURCES})
+CUDA_ADD_EXECUTABLE(threadsignal ${CURRENT_HEADERS} ${CURRENT_SOURCES})
