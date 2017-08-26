@@ -6,7 +6,7 @@ build/Makefile: CMakeLists.txt
 	mkdir build && cd build && cmake ../ && cd ../
 
 run: bulid/Makefile
-	cd build && make && ./threadParallel
+	cd build && make && ./threadParallel && cd ../
 
 install:
 	cp build/threadParallel ./

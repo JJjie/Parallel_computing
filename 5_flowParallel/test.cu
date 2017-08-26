@@ -100,6 +100,7 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size)
     cudaDeviceSynchronize();
     // cudaThreadSynchronize waits for the kernel to finish, and returns
     // any errors encountered during the launch.
+    printf("{%d,%d,%d,%d,%d}\n",dev_c[0],dev_c[1],dev_c[2],dev_c[3],dev_c[4]);
     cudaStatus = cudaThreadSynchronize();
     if (cudaStatus != cudaSuccess)
     {
