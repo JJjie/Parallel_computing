@@ -1,0 +1,6 @@
+./1_firsttry/build
+./2_devices/build
+./3_threadParallel/build
+./4_blockParallel/build
+./5_flowParallel/build
+./histogram/build

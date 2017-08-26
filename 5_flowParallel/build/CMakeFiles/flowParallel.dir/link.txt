@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/flowParallel.dir/flowParallel_generated_test.cu.o  -o flowParallel -rdynamic /usr/local/cuda-8.0/lib64/libcudart.so -Wl,-rpath,/usr/local/cuda-8.0/lib64 
