@@ -5,8 +5,8 @@
 
 
 __host__ void cpu_sort(int * const data, const int num_elements){
-  static int cpu_tmp_0[NUM_ELEM];
-  static int cpu_tmp_1[NUM_ELEM];
+  static int cpu_tmp_0[num_elements];
+  static int cpu_tmp_1[num_elements];
 
   for(int bit=0; bit<32; bit++){
     int base_cnt_0 = 0;
