@@ -1,6 +1,6 @@
 .PHONY: all
 
-all: run
+all: run install
 
 build/Makefile: CMakeLists.txt
 	mkdir build && cd build && cmake ../ && cd ../
@@ -13,3 +13,4 @@ install:
 
 clean:
 	rm -rf build
+	rm flowParallel

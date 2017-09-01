@@ -13,3 +13,4 @@ install:
 
 clean:
 	rm -rf build
+	rm performance
