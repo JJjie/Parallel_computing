@@ -1,6 +1,6 @@
 # Location of the CUDA Toolkit
 CUDA_PATH ?= "/usr/local/cuda-8.0"
-PROJECT_NAME = clock
+PROJECT_NAME = threadParallel
 
 ##############################
 # start deprecated interface #
@@ -224,7 +224,7 @@ run: build
 	$(EXEC) ./$(PROJECT_NAME)
 
 clean:
-	rm -f clock clock.o
-	rm -rf ../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/clock
+	rm -f $(PROJECT_NAME) $(PROJECT_NAME).o
+	rm -rf ../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/$(PROJECT_NAME)
 
 clobber: clean
