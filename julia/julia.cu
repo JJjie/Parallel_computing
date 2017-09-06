@@ -14,10 +14,10 @@ struct cuComplex{
     __device__ cuComplex operator* (const cuComplex& a){
       return cuComplex(r * a.r - i * a.i, i * a.r + r * a.i);
     }
-    __device__ cuComplex operator* (const cuComplex& a){
+    __device__ cuComplex operator+ (const cuComplex& a){
       return cuComplex(r + a.r, i + a.r );
     }
-}
+};
 
 __device__ int julia(int x, int y){ // 在GPU上运行
     const float scale= 1.5;
@@ -51,7 +51,7 @@ __global__ void kernel(unsigned char *ptr){
 int main(){
     CPUBitmap bitmap(DIM, DIM);
     unsigned char *dev_bitmap;
-    cudaerror_t cudastatus;
+    cudaError_t cudastatus;
 
     cudastatus = cudaMalloc((void**)&dev_bitmap, bitmap.image_size());
     if (cudastatus != cudaSuccess){
