@@ -34,7 +34,7 @@ __host__ void cpu_sort(int * const data, const int num_elements){
   }
 }
 
-_device__ void radix_sort(int * const data,
+__global__ void radix_sort(int * const data,
                           const int num_lists, const int num_elements, const int tid,
                           int * const sort_tmp_0, int * const sort_tmp_1){
 
@@ -63,11 +63,10 @@ _device__ void radix_sort(int * const data,
         data[base_cnt_0 + i + tid] = sort_tmp_1[i+tid];
       }
     }
-    __syncthreads();
 }
 
 cudaError_t sort(int * const data,
-                const int num_elements){
+                const int size){
     int * dev_data = NULL;
     int * sort_tmp_0 = NULL;
     int * sort_tmp_1 = NULL;
@@ -76,20 +75,20 @@ cudaError_t sort(int * const data,
     cudaStatus = cudaSetDevice(0);
     if (cudaStatus != cudaSuccess)
     {
-        printf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
+        fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
         goto Error;
     }
 
-    cudaStatus = cudaMalloc((void**)&dev_sort_tmp_1, size * sizeof(int));
+    cudaStatus = cudaMalloc((void**)&sort_tmp_1, size * sizeof(int));
     if (cudaStatus != cudaSuccess)
     {
-        printf(stderr, "cudaMalloc failed!");
+        fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
-    cudaStatus = cudaMalloc((void**)&dev_sort_tmp_0, size * sizeof(int));
+    cudaStatus = cudaMalloc((void**)&sort_tmp_0, size * sizeof(int));
     if (cudaStatus != cudaSuccess)
     {
-        printf(stderr, "cudaMalloc failed!");
+        fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
     cudaStatus = cudaMalloc((void**)&dev_data, size * sizeof(int));
@@ -102,16 +101,22 @@ cudaError_t sort(int * const data,
     cudaStatus = cudaMemcpy(dev_data, data, size * sizeof(int), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess)
     {
-        printf(stderr, "cudaMemcpy failed!");
+        fprintf(stderr, "cudaMemcpy failed!");
         goto Error;
     }
 
-    radix_sort<<<1, num_elements>>>(dev_data, 32, num_elements, 0, sort_tmp_0, sort_tmp_1)
+    radix_sort<<<1, 4>>>(dev_data, 6, size, 0, sort_tmp_0, sort_tmp_1);
+    cudaStatus = cudaThreadSynchronize();
+    if (cudaStatus != cudaSuccess)
+    {
+        fprintf(stderr, "cudaThreadSynchronize returned error code %d after launching addKernel!\n", cudaStatus);
+        goto Error;
+    }
 
     cudaStatus = cudaMemcpy(data, dev_data, size * sizeof(int), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess)
     {
-        printf(stderr, "cudaMemcpy failed!");
+        fprintf(stderr, "cudaMemcpy failed!");
         goto Error;
     }
 Error:
@@ -124,41 +129,39 @@ Error:
 
 int main(){
   int data[] = {122, 10, 2, 1, 2, 22, 12, 9, 45, 88, 108, 96, 38, 67, 0, 6, 27, 78, 48, 149, 914, 54, 5, 14};
+  struct timeval st, et;
 
-  for (unsigned int i = 0; i< 24; i++){
-    printf("%d ", data[i]);
-  }
-  printf("\nSerial time:\n");
-
-  struct timeval st; gettimeofday( &st, NULL );
-  cpu_sort(data, 24);
-  struct timeval et; gettimeofday( &et, NULL );
   for (unsigned int i = 0; i< 24; i++){
     printf("%d ", data[i]);
   }
   printf("\n");
-  printf("%ld ms\n", (et.tv_sec - st.tv_sec) * 1000 + (et.tv_usec - st.tv_usec)/1000);
 
-  printf("Parallel time:\n");
-  struct timeval st; gettimeofday( &st, NULL );
-  cudaStatus = sort(data, 24);
+  // gettimeofday( &st, NULL );
+  // cpu_sort(data, 24);
+  // gettimeofday( &et, NULL );
+  // for (unsigned int i = 0; i< 24; i++){
+  //   printf("%d ", data[i]);
+  // }
+  // printf("\nSerial time: %ld ms\n", (et.tv_sec - st.tv_sec) * 1000 + (et.tv_usec - st.tv_usec)/1000);
+
+  gettimeofday( &st, NULL );
+  cudaError_t cudaStatus = sort(data, 24);
   if (cudaStatus != cudaSuccess)
   {
-      printf(stderr, "addWithCuda failed!");
+      fprintf(stderr, "addWithCuda failed!");
       return 1;
   }
   cudaStatus = cudaThreadExit();
   if (cudaStatus != cudaSuccess)
   {
-      printf(stderr, "cudaThreadExit failed!");
+      fprintf(stderr, "cudaThreadExit failed!");
       return 1;
   }
-  struct timeval et; gettimeofday( &et, NULL );
+  gettimeofday( &et, NULL );
   for (unsigned int i = 0; i< 24; i++){
     printf("%d ", data[i]);
   }
-  printf("\n");
-  printf("%ld ms\n", (et.tv_sec - st.tv_sec) * 1000 + (et.tv_usec - st.tv_usec)/1000);
+  printf("\nParallel time: %ld ms\n", (et.tv_sec - st.tv_sec) * 1000 + (et.tv_usec - st.tv_usec)/1000);
 
 
   return 0;
