@@ -88,7 +88,7 @@ int main(){
     }
 
     c = 0;
-    for (int i=0; i<blocksPerGrid: i++) {
+    for (int i=0; i<blocksPerGrid; i++) {
         c += partial_c[i];
     }
 
