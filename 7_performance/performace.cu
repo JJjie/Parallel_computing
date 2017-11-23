@@ -114,6 +114,7 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, size_t size)
     }
     cudaEventRecord(stop,0);
     cudaEventSynchronize(stop);
+    
     float tm;
     cudaEventElapsedTime(&tm,start,stop);
     printf("GPU Elapsed time:%.6f ms.\n",tm);
